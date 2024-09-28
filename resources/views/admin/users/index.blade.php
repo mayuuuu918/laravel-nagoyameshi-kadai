@@ -51,7 +51,6 @@
                     {{ $users->appends(request()->query())->links() }}
                 </div>
             </div>
-            {{ $users->links() }}
         </div>
     </div>
 @endsection
