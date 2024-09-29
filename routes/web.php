@@ -29,8 +29,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'auth:admin
 
 Route::prefix('admin')->group(function () {
     // ユーザー一覧ページのルート
-    Route::get('users', [UserController::class, 'index'])->name('admin.users.index');
+    Route::get('users', [UserController::class, 'index'])->name('admin.users.index')->middleware('auth');
 
     // ユーザー詳細ページのルート
-    Route::get('users/{user}', [UserController::class, 'show'])->name('admin.users.show');
+    Route::get('users/{user}', [UserController::class, 'show'])->name('admin.users.show')->middleware('auth');
 });
