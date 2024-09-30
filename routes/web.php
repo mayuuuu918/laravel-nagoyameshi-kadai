@@ -27,10 +27,16 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'auth:admin
     Route::get('home', [Admin\HomeController::class, 'index'])->name('home');
 });
 
+/*
 Route::prefix('admin')->group(function () {
     // ユーザー一覧ページのルート
-    Route::get('users', [UserController::class, 'index'])->name('admin.users.index')->middleware('auth');
+    Route::get('users', [UserController::class, 'index'])->middleware('auth:admin')->name('admin.users.index');
 
     // ユーザー詳細ページのルート
-    Route::get('users/{user}', [UserController::class, 'show'])->name('admin.users.show')->middleware('auth');
+    Route::get('users/{user}', [UserController::class, 'show'])->middleware('auth:admin')->name('admin.users.show');
+});
+
+*/
+Route::prefix('admin')->name('admin.')->middleware('auth:admin')->group(function () {
+    Route::resource('users', UserController::class);
 });

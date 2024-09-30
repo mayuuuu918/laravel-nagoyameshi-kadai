@@ -32,6 +32,8 @@ class UserController extends Controller
             $users = User::paginate(15);
             $total = "";
         }
+
+
         return view('admin.users.index', compact('users', 'total_all', 'keyword', 'total'));
     }
 
