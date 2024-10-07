@@ -5,6 +5,9 @@ namespace Tests\Feature\Auth;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Models\User;
+use App\Models\Restaurant;
+
 
 class RegistrationTest extends TestCase
 {

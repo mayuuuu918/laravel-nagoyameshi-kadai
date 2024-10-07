@@ -4,19 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\User;
 
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
-    {
+    public function index(Request $request) {
+    /*
         $keyword = $request->keyword;
 
         $users = User::all();
@@ -36,6 +31,24 @@ class UserController extends Controller
 
         return view('admin.users.index', compact('users', 'total_all', 'keyword', 'total'));
     }
+    */
+
+    // 検索ボックスに入力されたキーワードを取得する
+    $keyword = $request->input('keyword');
+
+    // キーワードが存在すれば氏名またはフリガナで部分一致検索を行い、そうでなければ全件取得する
+    if ($keyword) {
+        $users = User::where('name', 'like', "%{$keyword}%")->orWhere('kana', 'like', "%{$keyword}%")->paginate(15);
+    } else {
+        $users = User::paginate(15);
+    }
+
+    $total = $users->total();
+
+    return view('admin.users.index', compact('users', 'keyword', 'total'));
+}
+
+
 
     public function show(User $user)
     {

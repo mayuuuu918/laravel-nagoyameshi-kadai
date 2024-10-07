@@ -8,7 +8,6 @@
 
                 <div class="d-flex justify-content-between align-items-end">
                     <form method="GET" action="{{ route('admin.users.index') }}" class="nagoyameshi-admin-search-box mb-3">
-                    @csrf
                         <div class="input-group">
                             <input type="text" class="form-control" placeholder="氏名・フリガナで検索" name="keyword" value="{{ $keyword }}">
                             <button type="submit" class="btn text-white shadow-sm nagoyameshi-btn">検索</button>
@@ -17,11 +16,7 @@
                 </div>
 
                 <div>
-                    @if ($keyword !== null)
                     <p class="mb-0">計{{ number_format($total) }}件</p>
-                    @else
-                    <p class="mb-0">計{{ ($total_all) }}件</p>
-            @endif
                 </div>
 
 
