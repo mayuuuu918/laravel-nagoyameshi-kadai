@@ -45,7 +45,7 @@ class RestaurantController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'image' => 'image|max:2048kb',
+            'image' => 'image|max:2048',
             'description' => 'required',
             'lowest_price' => 'required|numeric|min:0|lt:highest_price',
             'highest_price' => 'required|numeric|min:0|gt:lowest_price',
@@ -70,7 +70,7 @@ class RestaurantController extends Controller
 
         // アップロードされたファイル（name="image"）をstorage/app/public/restaurantsフォルダに保存し、戻り値（ファイルパス）を変数$imageに代入する
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('public.restaurants');
+            $path = $request->file('image')->store('public/restaurants');
 
             // ファイルパスからファイル名のみを取得し、Restaurantインスタンスのimage_nameプロパティに代入する
             $image = basename($path);
@@ -124,7 +124,6 @@ class RestaurantController extends Controller
 
 
         $restaurant->name = $request->input('name');
-        $restaurant->image = basename('image');
         $restaurant->description = $request->input('description');
         $restaurant->lowest_price = $request->input('lowest_price');
         $restaurant->highest_price = $request->input('highest_price');
@@ -135,21 +134,19 @@ class RestaurantController extends Controller
         $restaurant->seating_capacity = $request->input('seating_capacity');
 
         // アップロードされたファイル（name="image"）をstorage/app/public/restaurantsフォルダに保存し、戻り値（ファイルパス）を変数$imageに代入する
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('public/restaurants');
 
-            // ファイルパスからファイル名のみを取得し、Restaurantインスタンスのimage_nameプロパティに代入する
-            $image = basename($path);
-            $restaurant->image = $image;
+        if ($request->hasFile('image')) {
+            $image = $request->file('image')->store('public/restaurants');
+            $restaurant->image = basename($image); // ファイル名のみ保存
 
         } else {
-        // アップロードされていない場合、空の文字列を設定
-            $restaurant->image = $restaurant->image ?? '';  // デフォルトで空の文字列
+             // アップロードされていない場合、空の文字列を設定
+            $restaurant->image = '';
         }
 
-        $restaurant->update();
+        $restaurant->save();
 
-        return to_route('admin.restaurants.show', $restaurant->id)->with('flash_message', '店舗を編集しました。');
+        return to_route('admin.restaurants.show', ['restaurant' => $restaurant->id])->with('flash_message', '店舗を編集しました。');
     }
 
     /**
