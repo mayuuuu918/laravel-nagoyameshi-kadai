@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('restaurants', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('image')->nullable()->default('');
+            $table->string('image')->default('');
             $table->text('description');
             $table->integer('lowest_price')->unsigned();
             $table->integer('highest_price')->unsigned();

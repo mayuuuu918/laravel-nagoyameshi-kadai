@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RestaurantController;
+use App\Http\Controllers\Admin\CategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'auth:admin
     Route::resource('users', Admin\UserController::class)->only(['index', 'show']);
 
     Route::resource('restaurants', Admin\RestaurantController::class);
+
+    Route::resource('categories', Admin\CategoryController::class);
+
 });
 
 /*
