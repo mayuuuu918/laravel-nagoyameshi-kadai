@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Restaurant;
+use App\Models\Category;
 
 class RestaurantController extends Controller
 {
@@ -35,7 +36,8 @@ class RestaurantController extends Controller
      */
     public function create()
     {
-        return view('admin.restaurants.create');
+        $categories = Category::all();
+        return view('admin.restaurants.create', compact('categories'));
     }
 
     /**
@@ -76,6 +78,9 @@ class RestaurantController extends Controller
         $restaurant->seating_capacity = $request->input('seating_capacity');
         $restaurant->save();
 
+        $category_ids = array_filter($request->input('category_ids'));
+        $restaurant->categories()->sync($category_ids);
+
         return redirect()->route('admin.restaurants.index')->with('flash_message', '店舗を登録しました。');
     }
     // 詳細ページ
@@ -86,7 +91,11 @@ class RestaurantController extends Controller
     // 編集ページ
     public function edit(Restaurant $restaurant)
     {
-        return view('admin.restaurants.edit', compact('restaurant'));
+        $categories = Category::all();
+        // 設定されたカテゴリのIDを配列化する
+        $category_ids = $restaurant->categories->pluck('id')->toArray();
+
+        return view('admin.restaurants.edit', compact('restaurant', 'categories', 'category_ids'));
     }
 
     // 更新ページ
@@ -122,6 +131,10 @@ class RestaurantController extends Controller
         $restaurant->seating_capacity = $request->input('seating_capacity');
 
         $restaurant->save();
+
+        $category_ids = array_filter($request->input('category_ids'));
+        $restaurant->categories()->sync($category_ids);
+
 
         return redirect()->route('admin.restaurants.show', $restaurant)->with('flash_message', '店舗を編集しました。');
     }

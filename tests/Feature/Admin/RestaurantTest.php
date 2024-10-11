@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\Admin;
 use App\Models\User;
 use App\Models\Restaurant;
+use App\Models\Category;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -13,6 +14,15 @@ use Tests\TestCase;
 class RestaurantTest extends TestCase
 {
     use RefreshDatabase;
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // ダミーカテゴリデータを3つ作成
+        Category::factory()->create(['id' => 1, 'name' => 'Category 1']);
+        Category::factory()->create(['id' => 2, 'name' => 'Category 2']);
+        Category::factory()->create(['id' => 3, 'name' => 'Category 3']);
+    }
 
     /**
      * 未ログインユーザーは管理者側の店舗一覧ページにアクセスできない
@@ -131,7 +141,8 @@ class RestaurantTest extends TestCase
                 'address' => 'テスト',
                 'opening_time' => '10:00:00',
                 'closing_time' => '20:00:00',
-                'seating_capacity' => 50
+                'seating_capacity' => 50,
+                'category_ids' => [1, 2, 3], // カテゴリID配列
             ];
 
             // 未ログインのユーザーが店舗を登録しようとした場合のレスポンス
@@ -139,6 +150,7 @@ class RestaurantTest extends TestCase
 
             // レストランテーブルにデータが登録されていないことを確認
             $this->assertDatabaseMissing('restaurants', $restaurant_data);
+            unset($restaurant_data['category_ids']);
             $response->assertRedirect(route('login'));
     }
 
@@ -156,13 +168,17 @@ class RestaurantTest extends TestCase
                 'address' => 'テスト',
                 'opening_time' => '10:00:00',
                 'closing_time' => '20:00:00',
-                'seating_capacity' => 50
+                'seating_capacity' => 50,
+                'category_ids' => [1, 2, 3],
             ];
 
             $response = $this->actingAs($user)->post(route('admin.restaurants.store', $restaurant_data));
             $this->assertDatabaseMissing('restaurants', $restaurant_data);
             // アクセス拒否 (403 Forbidden) が返されることを期待
             $response->assertStatus(403);
+             // データが保存されていないことを確認
+            unset($restaurant_data['category_ids']);
+            $this->assertDatabaseMissing('restaurants', $restaurant_data);
     }
 
      // ログイン済みの管理者は店舗を登録できる
@@ -182,13 +198,27 @@ class RestaurantTest extends TestCase
             'address' => 'テスト',
             'opening_time' => '10:00:00',
             'closing_time' => '20:00:00',
-            'seating_capacity' => 50
+            'seating_capacity' => 50,
+            'category_ids' => [1, 2, 3], // カテゴリID配列
         ];
 
         $response = $this->actingAs($admin, 'admin')->post(route('admin.restaurants.store'), $restaurant_data);
 
             $this->assertDatabaseHas('restaurants', $restaurant_data);
+            unset($restaurant_data['category_ids']);
             $response->assertRedirect(route('admin.restaurants.index'));
+
+            // restaurantsテーブルにデータが保存されていることを確認
+        unset($restaurant_data['category_ids']); // category_idsはrestaurantsテーブルにないため削除
+        $this->assertDatabaseHas('restaurants', $restaurant_data);
+
+        // category_restaurantテーブルにカテゴリとの関連データが存在することを確認
+        foreach ([1, 2, 3] as $category_id) {
+            $this->assertDatabaseHas('category_restaurant', [
+                'restaurant_id' => Restaurant::first()->id,
+                'category_id' => $category_id,
+            ]);
+        }
     }
 
     // 未ログインのユーザーは管理者側の店舗編集ページにアクセスできない
@@ -245,6 +275,7 @@ class RestaurantTest extends TestCase
                 'opening_time' => '10:00:00',
                 'closing_time' => '20:00:00',
                 'seating_capacity' => 50,
+                'category_ids' => [1, 2], // カテゴリID配列
 
             ];
 
@@ -254,6 +285,10 @@ class RestaurantTest extends TestCase
             // レストランテーブルにデータが登録されていないことを確認
             $this->assertDatabaseMissing('restaurants', $updateData);
             $response->assertRedirect(route('admin.login'));
+
+            // データが更新されていないことを確認
+            unset($new_restaurant_data['category_ids']);
+            $this->assertDatabaseMissing('restaurants', $new_restaurant_data);
     }
 
     // ログイン済みの一般ユーザーは店舗を更新できない
@@ -274,12 +309,16 @@ class RestaurantTest extends TestCase
                 'opening_time' => '10:00:00',
                 'closing_time' => '20:00:00',
                 'seating_capacity' => 50,
+                'category_ids' => [1, 2], // カテゴリID配列
 
             ];
 
             $response = $this->actingAs($user)->patch(route('admin.restaurants.update', $restaurant),$updateData);
             $this->assertDatabaseMissing('restaurants', $updateData);
             $response->assertStatus(route('admin.login'));
+
+            unset($new_restaurant_data['category_ids']);
+            $this->assertDatabaseMissing('restaurants', $new_restaurant_data);
     }
 
      // ログイン済みの管理者は店舗を更新できる
@@ -304,7 +343,7 @@ class RestaurantTest extends TestCase
                 'opening_time' => '10:00:00',
                 'closing_time' => '20:00:00',
                 'seating_capacity' => 50,
-
+                'category_ids' => [1, 2], // カテゴリID配列
             ];
 
 

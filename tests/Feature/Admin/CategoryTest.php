@@ -4,7 +4,6 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Admin;
 use App\Models\User;
-use App\Models\Restaurant;
 use App\Models\Category;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -51,7 +50,7 @@ class CategoryTest extends TestCase
     public function test_guest_cannot_access_admin_categories_store()
     {
 
-        $categories_data = ['name' => 'テスト登録'];
+        $categories_data = ['name' => 'テスト',];
 
         $response = $this->post(route('admin.categories.store'), $categories_data);
 
@@ -64,7 +63,7 @@ class CategoryTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $categories_data = ['name' => 'テスト登録'];
+        $categories_data = ['name' => 'テスト',];
 
         $response = $this->actingAs($user)->post(route('admin.categories.store'), $categories_data);
 
@@ -80,7 +79,7 @@ class CategoryTest extends TestCase
         $admin->password = Hash::make('nagoyameshi');
         $admin->save();
 
-        $categories_data = ['name' => 'テスト登録'];
+        $categories_data = ['name' => 'テスト',];
 
         $response = $this->actingAs($admin, 'admin')->post(route('admin.categories.store'), $categories_data);
 
@@ -88,13 +87,13 @@ class CategoryTest extends TestCase
         $response->assertRedirect(route('admin.categories.index'));
     }
 
-    // 7.未ログインのユーザーは店カテゴリを更新できない
+    // 7.未ログインのユーザーはカテゴリを更新できない
     public function test_guest_cannot_access_admin_categories_update()
     {
 
         $categories_data = Category::factory()->create();
 
-        $new_categories_data = ['name' => 'テスト更新'];
+        $new_categories_data = ['name' => 'テスト更新',];
 
         $response = $this->patch(route('admin.categories.update', $categories_data), $new_categories_data);
 
@@ -105,14 +104,12 @@ class CategoryTest extends TestCase
     // 8.ログイン済みの一般ユーザーはカテゴリを更新できない
     public function test_user_cannot_access_admin_categories_update()
     {
-        // ミドルウェアを無効にする（CSRF保護を無効化）
-        $this->withoutMiddleware();
 
         $user = User::factory()->create();
 
         $categories_data = Category::factory()->create();
 
-        $new_categories_data = ['name' => 'テスト更新'];
+        $new_categories_data = ['name' => 'テスト更新',];
 
         $response = $this->actingAs($user)->patch(route('admin.categories.update', $categories_data), $new_categories_data);
 
@@ -130,20 +127,17 @@ class CategoryTest extends TestCase
 
         $categories_data = Category::factory()->create();
 
-        $new_categories_data = ['name' => 'テスト更新'];
+        $new_categories_data = ['name' => 'テスト更新',];
 
         $response = $this->actingAs($admin, 'admin')->patch(route('admin.categories.update', $categories_data), $new_categories_data);
 
         $this->assertDatabaseHas('categories', $new_categories_data);
-        $response->assertRedirect(route('admin.categories.index', $categories_data));
+        $response->assertRedirect(route('admin.categories.index'));
     }
 
     // 未ログインのユーザーはカテゴリを削除できない
     public function test_guest_cannot_access_admin_categories_destroy()
     {
-        // ミドルウェアを無効にする（CSRF保護を無効化）
-        $this->withoutMiddleware();
-
         $categories = Category::factory()->create();
 
         $response = $this->delete(route('admin.categories.destroy', $categories));
@@ -155,8 +149,6 @@ class CategoryTest extends TestCase
     // ログイン済みの一般ユーザーはカテゴリを削除できない
     public function test_user_cannot_access_admin_categories_destroy()
     {
-        // ミドルウェアを無効にする（CSRF保護を無効化）
-        $this->withoutMiddleware();
 
         $user = User::factory()->create();
 
