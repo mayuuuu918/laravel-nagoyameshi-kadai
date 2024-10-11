@@ -13,4 +13,9 @@ class Restaurant extends Model
     public function categories() {
         return $this->belongsToMany(Category::class)->withTimestamps();
     }
+
+    // 1つの店舗は複数の定休日を登録できる
+    public function regular_holidays() {
+        return $this->belongsToMany(RegularHoliday::class)->withTimestamps();
+    }
 }
