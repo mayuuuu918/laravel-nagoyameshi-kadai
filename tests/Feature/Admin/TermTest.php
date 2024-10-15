@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Admin;
+use App\Models\User;
 use App\Models\Term;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -10,61 +12,69 @@ use Tests\TestCase;
 
 class TermTest extends TestCase
 {
+    use RefreshDatabase;
+
     // 未ログインのユーザーは管理者側の利用規約ページにアクセスできない
-    public function test_guest_cannot_access_admin_term_index()
+    public function test_guest_cannot_access_admin_terms_index()
     {
-        $response = $this->get(route('admin.term.index'));
+        $term = Term::factory()->create();
+
+        $response = $this->get(route('admin.terms.index'));
 
         $response->assertRedirect(route('admin.login'));
     }
 
     // ログイン済みの一般ユーザーは管理者側の利用規約ページにアクセスできない
-    public function test_user_cannot_access_admin_term_index()
+    public function test_user_cannot_access_admin_terms_index()
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('admin.term.index'));
+        $term = Term::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.terms.index'));
 
         $response->assertRedirect(route('admin.login'));
     }
 
      // ログイン済みの管理者は管理者側の利用規約ページにアクセスできる
-    public function test_admin_can_access_admin_term_index()
+    public function test_admin_can_access_admin_terms_index()
     {
         $admin = new Admin();
         $admin->email = 'admin@example.com';
         $admin->password = Hash::make('nagoyameshi');
         $admin->save();
 
-        $response = $this->actingAs($admin, 'admin')->get(route('admin.term.index'));
+        $term = Term::factory()->create();
+
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.terms.index'));
 
         $response->assertStatus(200);
     }
 
     // 未ログインのユーザーは管理者側の利用規約編集ページにアクセスできない
-    public function test_guest_cannot_access_admin_term_edit()
+    public function test_guest_cannot_access_admin_terms_edit()
     {
         $term = Term::factory()->create();
 
-        $response = $this->get(route('admin.term.create', $term));
+        $response = $this->get(route('admin.terms.edit', $term));
 
         $response->assertRedirect(route('admin.login'));
     }
 
     // ログイン済みの一般ユーザーは管理者側の利用規約編集ページにアクセスできない
-    public function test_user_cannot_access_admin_term_edit()
+    public function test_user_cannot_access_admin_terms_edit()
     {
         $user = User::factory()->create();
 
         $term = Term::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('admin.term.edit', $term));
+        $response = $this->actingAs($user)->get(route('admin.terms.edit', $term));
 
         $response->assertRedirect(route('admin.login'));
     }
 
     // ログイン済みの管理者は管理者側の利用規約編集ページにアクセスできる
-    public function test_admin_can_access_admin_company_edit()
+    public function test_admin_can_access_admin_terms_edit()
     {
         $admin = new Admin();
         $admin->email = 'admin@example.com';
@@ -73,30 +83,23 @@ class TermTest extends TestCase
 
         $term = Term::factory()->create();
 
-        $response = $this->actingAs($admin, 'admin')->get(route('admin.term.edit', $term));
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.terms.edit', $term));
 
         $response->assertStatus(200);
     }
 
      // 未ログインのユーザーは利用規約を更新できない
-    public function test_guest_cannot_access_term_update()
+    public function test_guest_cannot_access_terms_update()
     {
             $term = Term::factory()->create();
 
             // 更新しようとするデータ
             $updateData = [
-                'name' => 'テスト更新',
-                'postal_code' => '0000001',
-                'address' => 'テスト',
-                'representative' => 'テスト',
-                'establishment_date' => 'テスト',
-                'capital' => 'テスト',
-                'business' => 'テスト',
-                'number_of_employees' => 'テスト',
+                'content' => 'テスト更新',
             ];
 
             // 未ログインのユーザーが更新しようとした場合のレスポンス
-            $response = $this->patch(route('admin.term.update', $term), $updateData);
+            $response = $this->patch(route('admin.terms.update', $term), $updateData);
 
             $this->assertDatabaseMissing('terms', $updateData);
 
@@ -104,32 +107,25 @@ class TermTest extends TestCase
     }
 
     // ログイン済みの一般ユーザーは利用規約を更新できない
-    public function test_user_cannot_access_admin_term_update()
+    public function test_user_cannot_access_admin_terms_update()
     {
             $user = User::factory()->create();
             $term = Term::factory()->create();
 
             // 更新しようとするデータ
             $updateData = [
-                'name' => 'テスト更新',
-                'postal_code' => '0000001',
-                'address' => 'テスト',
-                'representative' => 'テスト',
-                'establishment_date' => 'テスト',
-                'capital' => 'テスト',
-                'business' => 'テスト',
-                'number_of_employees' => 'テスト',
+                'content' => 'テスト更新',
             ];
 
-            $response = $this->actingAs($user)->patch(route('admin.term.update', $term),$updateData);
+            $response = $this->actingAs($user)->patch(route('admin.terms.update', $term),$updateData);
 
-            $this->assertDatabaseMissing('term', $updateData);
+            $this->assertDatabaseMissing('terms', $updateData);
 
             $response->assertRedirect(route('admin.login'));
             }
 
      // ログイン済みの管理者は利用規約を更新できる
-    public function test_admin_can_access_admin_term_update()
+    public function test_admin_can_access_admin_terms_update()
     {
         $admin = new Admin();
         $admin->email = 'admin@example.com';
@@ -140,24 +136,15 @@ class TermTest extends TestCase
 
             // 更新しようとするデータ
             $updateData = [
-                'name' => 'テスト更新',
-                'postal_code' => '0000001',
-                'address' => 'テスト',
-                'representative' => 'テスト',
-                'establishment_date' => 'テスト',
-                'capital' => 'テスト',
-                'business' => 'テスト',
-                'number_of_employees' => 'テスト',
+                'content' => 'テスト更新',
             ];
 
 
-            $response = $this->actingAs($admin, 'admin')->patch(route('admin.term.update', $term), $updateData);
+            $response = $this->actingAs($admin, 'admin')->patch(route('admin.terms.update', $term), $updateData);
 
-            $this->assertDatabaseHas('term', $updateData);
+            $this->assertDatabaseHas('terms', $updateData);
 
-            $term = Term::latest('id')->first();
-
-            $response->assertRedirect(route('admin.term.show', $term));
+            $response->assertRedirect(route('admin.terms.index'));
     }
 
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\RestaurantController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\TermController;
+use App\Http\Controllers\HomeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,8 +20,8 @@ use App\Http\Controllers\Admin\TermController;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+Route::group(['middleware' => 'guest:admin'], function () {
+    Route::get('/', [HomeController::class, 'index'])->name('home');
 });
 
 
@@ -36,28 +37,11 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'auth:admin
 
     Route::resource('categories', Admin\CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
 
+    Route::resource('company', Admin\CompanyController::class)->only(['index', 'edit', 'update']);
 
     Route::resource('terms', Admin\TermController::class)->only(['index', 'edit', 'update']);
-
-    Route::get('companies', [Admin\CompanyController::class, 'index'])->name('company.index'); // 新しいルートを追加
-
-    Route::get('companies/{company}/edit', [Admin\CompanyController::class, 'edit'])->name('company.edit');
-
-    Route::patch('companies/{company}/update', [Admin\CompanyController::class, 'update'])->name('company.update');
-});
-
-/*
-Route::prefix('admin')->group(function () {
-    // ユーザー一覧ページのルート
-    Route::get('users', [UserController::class, 'index'])->middleware('auth:admin')->name('admin.users.index');
-
-    // ユーザー詳細ページのルート
-    Route::get('users/{user}', [UserController::class, 'show'])->middleware('auth:admin')->name('admin.users.show');
 });
 
 
-Route::prefix('admin')->name('admin.')->middleware('auth:admin')->group(function () {
-    Route::resource('users', UserController::class);
-});
-*/
+
 

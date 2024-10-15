@@ -32,7 +32,6 @@ class TermController extends Controller
         ]);
 
         $term->content = $request->input('content');
-
         $term->save();
 
         return redirect()->route('admin.terms.index')->with('flash_message', '利用規約を編集しました。');

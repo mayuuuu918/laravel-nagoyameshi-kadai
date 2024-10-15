@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Admin;
+use App\Models\User;
 use App\Models\Company;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,6 +15,8 @@ class CompanyTest extends TestCase
     // 未ログインのユーザーは管理者側の会社概要ページにアクセスできない
     public function test_guest_cannot_access_admin_company_index()
     {
+        $company = Company::factory()->create();
+
         $response = $this->get(route('admin.company.index'));
 
         $response->assertRedirect(route('admin.login'));
@@ -22,6 +26,8 @@ class CompanyTest extends TestCase
     public function test_user_cannot_access_admin_company_index()
     {
         $user = User::factory()->create();
+
+        $company = Company::factory()->create();
 
         $response = $this->actingAs($user)->get(route('admin.company.index'));
 
@@ -46,7 +52,7 @@ class CompanyTest extends TestCase
     {
         $company = Company::factory()->create();
 
-        $response = $this->get(route('admin.company.create', $company));
+        $response = $this->get(route('admin.company.edit', $company));
 
         $response->assertRedirect(route('admin.login'));
     }
@@ -58,7 +64,7 @@ class CompanyTest extends TestCase
 
         $company = Company::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('admin.company.edit', $restaurant));
+        $response = $this->actingAs($user)->get(route('admin.company.edit', $company));
 
         $response->assertRedirect(route('admin.login'));
     }
@@ -157,8 +163,6 @@ class CompanyTest extends TestCase
             $response = $this->actingAs($admin, 'admin')->patch(route('admin.company.update', $company), $updateData);
 
             $this->assertDatabaseHas('company', $updateData);
-
-            $company = Company::latest('id')->first();
 
             $response->assertRedirect(route('admin.company.show', $company));
     }
