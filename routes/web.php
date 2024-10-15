@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RestaurantController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CompanyController;
+use App\Http\Controllers\Admin\TermController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +36,14 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'auth:admin
 
     Route::resource('categories', Admin\CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
 
+
+    Route::resource('terms', Admin\TermController::class)->only(['index', 'edit', 'update']);
+
+    Route::get('companies', [Admin\CompanyController::class, 'index'])->name('company.index'); // 新しいルートを追加
+
+    Route::get('companies/{company}/edit', [Admin\CompanyController::class, 'edit'])->name('company.edit');
+
+    Route::patch('companies/{company}/update', [Admin\CompanyController::class, 'update'])->name('company.update');
 });
 
 /*
