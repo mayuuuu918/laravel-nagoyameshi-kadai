@@ -27,7 +27,7 @@ Route::group(['middleware' => 'guest:admin'], function () {
 
 });
 
-Route::group(['middleware' => 'auth'], function () {
+Route::group(['middleware' => ['auth', 'verified']], function () {
     Route::resource('user', UserController::class)->only(['index', 'update', 'edit']);
 });
 
@@ -38,7 +38,7 @@ require __DIR__.'/auth.php';
 Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'auth:admin'], function () {
     Route::get('home', [Admin\HomeController::class, 'index'])->name('home');
 
-    Route::resource('users', Admin\AdminUserController::class)->only(['index', 'show']);
+    Route::resource('users', Admin\UserController::class)->only(['index', 'show']);
 
     Route::resource('restaurants', Admin\RestaurantController::class);
 
