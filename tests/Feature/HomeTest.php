@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 
-use App\Models\Restaurants;
-use App\Models\Category;
+use App\Models\Admin;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -19,16 +19,15 @@ class HomeTest extends TestCase
      *
      * @return void
      */
-    public function test_guest_can_access_home_index()
+    public function test_guest_can_access_home()
     {
         $response = $this->get(route('home'));
 
-        $response = $this->actingAs()->get(route('home'));
         $response->assertStatus(200);
     }
 
      // ログイン済みの一般ユーザーは会員側のトップページにアクセスできる
-    public function test_user_can_access_admin_home_index()
+    public function test_user_can_access_home()
     {
         $user = User::factory()->create();
 
@@ -38,7 +37,7 @@ class HomeTest extends TestCase
     }
 
     // ログイン済みの管理者は会員側のトップページにアクセスできない
-    public function test_admin_cannot_access_home_index()
+    public function test_admin_cannot_access_home()
     {
         $admin = new Admin();
         $admin->email = 'admin@example.com';
@@ -47,6 +46,6 @@ class HomeTest extends TestCase
 
         $response = $this->actingAs($admin, 'admin')->get(route('home'));
 
-        $response->assertRedirect(route('admin.login'));
+        $response->assertRedirect(route('admin.home'));
     }
 }
