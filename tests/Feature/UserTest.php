@@ -12,7 +12,6 @@ use Tests\TestCase;
 class UserTest extends TestCase
 {
     use RefreshDatabase;
-
     /**
      * 未ログインユーザーは会員側の会員情報ページにアクセスできない
      *

@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Kyslik\ColumnSortable\Sortable;
 
 class Restaurant extends Model
 {
-    use HasFactory;
+    use HasFactory, Sortable;
 
     // 1つの店舗は複数のカテゴリを登録できる
     public function categories() {
