@@ -47,6 +47,8 @@ class RestaurantTest extends TestCase
       //未ログインユーザーは会員側の店舗詳細ページにアクセスできる
     public function test_guest_can_access_user_restaurants_show()
     {
+        $restaurant = Restaurant::factory()->create();
+
         $response = $this->get(route('restaurants.show'));
 
         $response->assertStatus(200);
@@ -57,7 +59,9 @@ class RestaurantTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('restaurants.show'));
+        $restaurant = Restaurant::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('restaurants.show', $restaurant));
 
         $response->assertStatus(200);
     }
@@ -69,6 +73,8 @@ class RestaurantTest extends TestCase
         $admin->email = 'admin@example.com';
         $admin->password = Hash::make('nagoyameshi');
         $admin->save();
+
+        $restaurant = Restaurant::factory()->create();
 
         $response = $this->actingAs($admin, 'admin')->get(route('restaurants.show'));
 
