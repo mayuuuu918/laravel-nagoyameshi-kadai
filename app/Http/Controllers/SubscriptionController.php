@@ -42,7 +42,7 @@ class SubscriptionController extends Controller
     // お支払い方法更新機能
     public function update(Request $request)
     {
-        $request->user()->updateDefaultPaymentMethod($request->$paymentMethod);
+        $request->user()->updateDefaultPaymentMethod($request->paymentMethodId);
 
         return redirect()->route('home')->with('flash_message', 'お支払い方法を変更しました。');
     }
