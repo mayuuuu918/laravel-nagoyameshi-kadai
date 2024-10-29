@@ -30,4 +30,13 @@ class Restaurant extends Model
         return $query->withAvg('reviews', 'score')->orderBy('reviews_avg_score', $direction);
     }
 
+    // 1つの店舗は複数の予約を登録できる
+    public function reservations() {
+        return $this->hasMany(Reservation::class);
+    }
+
+    // 予約を並び替える
+    public function popularSortable($query, $direction) {
+        return $query->withCount('reservations')->orderBy('reservations_count', $direction);
+    }
 }

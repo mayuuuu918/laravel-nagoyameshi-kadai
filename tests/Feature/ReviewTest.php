@@ -14,264 +14,493 @@ use App\Models\Restaurant;
 
 class ReviewTest extends TestCase
 {
-    //  未ログインユーザーは会員側のレビュー一覧ページにアクセスできない
-    public function test_unauthenticated_users_cannot_access_member_side_review_list_page()
+    use RefreshDatabase;
+ 
+    // 未ログインのユーザーは会員側のレビュー一覧ページにアクセスできない
+    public function test_guest_cannot_access_reviews_index()
     {
-        $response = $this->get('review.index');
-        $response->assertRedirect('login');
-    }
+        $restaurant = Restaurant::factory()->create();
 
+        $response = $this->get(route('restaurants.reviews.index', $restaurant));
+
+        $response->assertRedirect(route('login'));
+    }
 
     // ログイン済みの無料会員は会員側のレビュー一覧ページにアクセスできる
-    public function test_logged_in_free_members_can_access_member_side_review_list_page()
+    public function test_free_user_can_access_reviews_index()
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('review.index'));
+        $restaurant = Restaurant::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('restaurants.reviews.index', $restaurant));
+
         $response->assertStatus(200);
     }
 
-    //  ログイン済みの有料会員は会員側のレビュー一覧ページにアクセスできる
-    public function test_logged_in_paid_members_can_access_member_side_review_list_page()
+    // ログイン済みの有料会員は会員側のレビュー一覧ページにアクセスできる
+    public function test_premium_user_can_access_reviews_index()
     {
         $user = User::factory()->create();
-        $user->newSubscription('default', 'price_1PBCDL2MIT849GWt3ambAejQ')->create('pm_card_visa');
+        $user->newSubscription('premium_plan', 'price_************************')->create('pm_card_visa');
 
-        $response = $this->actingAs($user)->get('review.index');
+        $restaurant = Restaurant::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('restaurants.reviews.index', $restaurant));
+
         $response->assertStatus(200);
     }
 
-    //  ログイン済みの管理者は会員側のレビュー一覧ページにアクセスできない
-    public function test_logged_in_administrators_cannot_access_member_side_review_list_page()
+    // ログイン済みの管理者は会員側のレビュー一覧ページにアクセスできない
+    public function test_admin_cannot_access_reviews_index()
     {
         $admin = new Admin();
         $admin->email = 'admin@example.com';
         $admin->password = Hash::make('nagoyameshi');
         $admin->save();
 
-        $response = $this->actingAs($admin, 'admin')->get(route('review.index'));
+        $restaurant = Restaurant::factory()->create();
+
+        $response = $this->actingAs($admin, 'admin')->get(route('restaurants.reviews.index', $restaurant));
+
         $response->assertRedirect(route('admin.home'));
     }
 
-    // create アクション（レビュー投稿ページ）
     // 未ログインのユーザーは会員側のレビュー投稿ページにアクセスできない
-    public function test_guest_user_cannot_access_member_side_review_submission_page()
+    public function test_guest_cannot_access_reviews_create()
     {
-        $response = $this->get('/reviews/create');
-        $response->assertRedirect('/login');
+        $restaurant = Restaurant::factory()->create();
+
+        $response = $this->get(route('restaurants.reviews.create', $restaurant));
+
+        $response->assertRedirect(route('login'));
     }
 
     // ログイン済みの無料会員は会員側のレビュー投稿ページにアクセスできない
-    public function test_logged_in_free_member_cannot_access_member_side_review_submission_page()
+    public function test_free_user_cannot_access_reviews_create()
     {
-        $user = User::factory()->create(['type' => 'freeMember']);
+        $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get('/reviews/create');
-        $response->assertStatus(403);
+        $restaurant = Restaurant::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('restaurants.reviews.create', $restaurant));
+
+        $response->assertRedirect(route('subscription.create'));
     }
 
     // ログイン済みの有料会員は会員側のレビュー投稿ページにアクセスできる
-    public function test_logged_in_paid_member_can_access_member_side_review_submission_page()
+    public function test_premium_user_can_access_reviews_create()
     {
-        $user = User::factory()->create(['type' => 'premiumMember']);
+        $user = User::factory()->create();
+        $user->newSubscription('premium_plan', 'price_************************')->create('pm_card_visa');
 
-        $response = $this->actingAs($user)->get('/reviews/create');
+        $restaurant = Restaurant::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('restaurants.reviews.create', $restaurant));
+
         $response->assertStatus(200);
     }
 
     // ログイン済みの管理者は会員側のレビュー投稿ページにアクセスできない
-    public function test_logged_in_admin_cannot_access_member_side_review_submission_page()
+    public function test_admin_cannot_access_reviews_create()
     {
-        $admin = User::factory()->create(['type' => 'admin']);
+        $admin = new Admin();
+        $admin->email = 'admin@example.com';
+        $admin->password = Hash::make('nagoyameshi');
+        $admin->save();
 
-        $response = $this->actingAs($admin)->get('/reviews/create');
-        $response->assertStatus(403);
+        $restaurant = Restaurant::factory()->create();
+
+        $response = $this->actingAs($admin, 'admin')->get(route('restaurants.reviews.create', $restaurant));
+
+        $response->assertRedirect(route('admin.home'));
     }
 
-    // レビュー投稿
-    public function test_guest_user_cannot_submit_review()
+    // 未ログインのユーザーはレビューを投稿できない
+    public function test_guest_cannot_access_reviews_store()
     {
-        $response = $this->post('/reviews/store', ['content' => 'Sample Review']);
-        $response->assertRedirect('/login');
+        $restaurant = Restaurant::factory()->create();
+
+        $review_data = [
+            'score' => 1,
+            'content' => 'テスト'
+        ];
+
+        $response = $this->post(route('restaurants.reviews.store', $restaurant), $review_data);
+
+        $this->assertDatabaseMissing('reviews', $review_data);
+        $response->assertRedirect(route('login'));
     }
 
-    public function test_logged_in_free_member_cannot_submit_review()
+    // ログイン済みの無料会員はレビューを投稿できない
+    public function test_free_user_cannot_access_reviews_store()
     {
-        $user = User::factory()->create(['type' => 'freeMember']);
+        $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->post('/reviews/store', ['content' => 'Sample Review']);
-        $response->assertStatus(403);
+        $restaurant = Restaurant::factory()->create();
+
+        $review_data = [
+            'score' => 1,
+            'content' => 'テスト'
+        ];
+
+        $response = $this->actingAs($user)->post(route('restaurants.reviews.store', $restaurant), $review_data);
+
+        $this->assertDatabaseMissing('reviews', $review_data);
+        $response->assertRedirect(route('subscription.create'));
     }
 
-    public function test_logged_in_paid_member_can_submit_review()
+    // ログイン済みの有料会員はレビューを投稿できる
+    public function test_premium_user_can_access_reviews_store()
     {
-        $user = User::factory()->create(['type' => 'premiumMember']);
+        $user = User::factory()->create();
+        $user->newSubscription('premium_plan', 'price_************************')->create('pm_card_visa');
 
-        $response = $this->actingAs($user)->post('/reviews/store', ['content' => 'Sample Review']);
-        $response->assertStatus(302); // リダイレクトを想定
+        $restaurant = Restaurant::factory()->create();
+
+        $review_data = [
+            'score' => 1,
+            'content' => 'テスト'
+        ];
+
+        $response = $this->actingAs($user)->post(route('restaurants.reviews.store', $restaurant), $review_data);
+
+        $this->assertDatabaseHas('reviews', $review_data);
+        $response->assertRedirect(route('restaurants.reviews.index', $restaurant));
     }
 
-    public function test_logged_in_admin_cannot_submit_review()
+    // ログイン済みの管理者はレビューを投稿できない
+    public function test_admin_cannot_access_reviews_store()
     {
-        $admin = User::factory()->create(['type' => 'admin']);
+        $admin = new Admin();
+        $admin->email = 'admin@example.com';
+        $admin->password = Hash::make('nagoyameshi');
+        $admin->save();
 
-        $response = $this->actingAs($admin)->post('/reviews/store', ['content' => 'Sample Review']);
-        $response->assertStatus(403);
+        $restaurant = Restaurant::factory()->create();
+
+        $review_data = [
+            'score' => 1,
+            'content' => 'テスト'
+        ];
+
+        $response = $this->actingAs($admin, 'admin')->post(route('restaurants.reviews.store', $restaurant), $review_data);
+
+        $this->assertDatabaseMissing('reviews', $review_data);
+        $response->assertRedirect(route('admin.home'));
     }
 
-    // レビュー編集ページ
-    public function test_guest_user_cannot_access_member_side_review_edit_page()
+    // 未ログインのユーザーは会員側のレビュー編集ページにアクセスできない
+    public function test_guest_cannot_access_reviews_edit()
     {
-        $response = $this->get('/reviews/edit/1');
-        $response->assertRedirect('/login');
+        $restaurant = Restaurant::factory()->create();
+
+        $user = User::factory()->create();
+
+        $review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $user->id
+        ]);
+
+        $response = $this->get(route('restaurants.reviews.edit', [$restaurant, $review]));
+
+        $response->assertRedirect(route('login'));
     }
 
-    public function test_logged_in_free_member_cannot_access_review_edit_page()
+    // ログイン済みの無料会員は会員側のレビュー編集ページにアクセスできない
+    public function test_free_user_cannot_access_reviews_edit()
     {
-        $user = User::factory()->create(['type' => 'freeMember']);
+        $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get('/reviews/edit/1');
-        $response->assertStatus(403);
+        $restaurant = Restaurant::factory()->create();
+
+        $review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $user->id
+        ]);
+
+        $response = $this->actingAs($user)->get(route('restaurants.reviews.edit', [$restaurant, $review]));
+
+        $response->assertRedirect(route('subscription.create'));
     }
 
-    public function test_logged_in_paid_member_cannot_access_others_review_edit_page()
+    // ログイン済みの有料会員は会員側の他人のレビュー編集ページにアクセスできない
+    public function test_premium_user_cannot_access_others_reviews_edit()
     {
-        $user = User::factory()->create(['type' => 'premiumMember']);
-        $anotherUser = User::factory()->create(['type' => 'premiumMember']);
+        $user = User::factory()->create();
+        $user->newSubscription('premium_plan', 'price_************************')->create('pm_card_visa');
+        $other_user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get("/reviews/edit/{$anotherUser->id}");
-        $response->assertStatus(403);
+        $restaurant = Restaurant::factory()->create();
+
+        $review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $other_user->id
+        ]);
+
+        $response = $this->actingAs($user)->get(route('restaurants.reviews.edit', [$restaurant, $review]));
+
+        $response->assertRedirect(route('restaurants.reviews.index', $restaurant));
     }
-    public function test_logged_in_paid_member_can_access_own_review_edit_page()
 
+    // ログイン済みの有料会員は会員側の自身のレビュー編集ページにアクセスできる
+    public function test_premium_user_can_access_own_reviews_edit()
     {
-        $user = User::factory()->create(['type' => 'premiumMember']);
+        $user = User::factory()->create();
+        $user->newSubscription('premium_plan', 'price_************************')->create('pm_card_visa');
 
-        $response = $this->actingAs($user)->get("/reviews/edit/{$user->id}");
+        $restaurant = Restaurant::factory()->create();
+
+        $review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $user->id
+        ]);
+
+        $response = $this->actingAs($user)->get(route('restaurants.reviews.edit', [$restaurant, $review]));
+
         $response->assertStatus(200);
     }
 
-    public function test_logged_in_admin_cannot_access_member_side_review_edit_page()
+    // ログイン済みの管理者は会員側のレビュー編集ページにアクセスできない
+    public function test_admin_cannot_access_reviews_edit()
     {
-        $admin = User::factory()->create(['type' => 'admin']);
+        $admin = new Admin();
+        $admin->email = 'admin@example.com';
+        $admin->password = Hash::make('nagoyameshi');
+        $admin->save();
 
-        $response = $this->actingAs($admin)->get("/reviews/edit/1");
-        $response->assertStatus(403);
+        $restaurant = Restaurant::factory()->create();
+
+        $user = User::factory()->create();
+
+        $review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $user->id
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')->get(route('restaurants.reviews.edit', [$restaurant, $review]));
+
+        $response->assertRedirect(route('admin.home'));
     }
 
-    public function test_guest_user_cannot_update_review()
-{
-    $review = Review::factory()->create();
-    $response = $this->patch(route('reviews.update', $review), [
-        'score' => 5,
-        'content' => 'Updated Content'
-    ]);
-    $response->assertRedirect(route('login'));
-    $this->assertDatabaseMissing('reviews', ['content' => 'Updated Content']);
-}
+    // 未ログインのユーザーはレビューを更新できない
+    public function test_guest_cannot_access_reviews_update()
+    {
+        $restaurant = Restaurant::factory()->create();
 
-public function test_logged_in_free_member_cannot_update_review()
-{
-    $user = User::factory()->freeMember()->create();
-    $review = Review::factory()->create(['user_id' => $user->id]);
-    $this->actingAs($user);
-    $response = $this->patch(route('reviews.update', $review), [
-        'score' => 5,
-        'content' => 'Updated Content'
-    ]);
-    $response->assertStatus(403);
-    $this->assertDatabaseMissing('reviews', ['content' => 'Updated Content']);
-}
+        $user = User::factory()->create();
 
-public function test_logged_in_paid_member_cannot_update_others_review()
-{
-    $user = User::factory()->paidMember()->create();
-    $otherUser = User::factory()->create();
-    $review = Review::factory()->create(['user_id' => $otherUser->id]);
-    $this->actingAs($user);
-    $response = $this->patch(route('reviews.update', $review), [
-        'score' => 5,
-        'content' => 'Updated Content'
-    ]);
-    $response->assertStatus(403);
-    $this->assertDatabaseMissing('reviews', ['content' => 'Updated Content']);
-}
+        $old_review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $user->id
+        ]);
 
-public function test_logged_in_paid_member_can_update_own_review()
-{
-    $user = User::factory()->paidMember()->create();
-    $review = Review::factory()->create(['user_id' => $user->id]);
-    $this->actingAs($user);
-    $response = $this->patch(route('reviews.update', $review), [
-        'score' => 5,
-        'content' => 'Updated Content'
-    ]);
-    $response->assertStatus(200);
-    $this->assertDatabaseHas('reviews', ['content' => 'Updated Content']);
-}
+        $new_review_data = [
+            'score' => 5,
+            'content' => 'テスト更新'
+        ];
 
-public function test_logged_in_admin_cannot_update_review()
-{
-    $admin = User::factory()->admin()->create();
-    $review = Review::factory()->create();
-    $this->actingAs($admin);
-    $response = $this->patch(route('reviews.update', $review), [
-        'score' => 5,
-        'content' => 'Updated Content'
-    ]);
-    $response->assertStatus(403);
-    $this->assertDatabaseMissing('reviews', ['content' => 'Updated Content']);
-}
+        $response = $this->patch(route('restaurants.reviews.update', [$restaurant, $old_review]), $new_review_data);
 
+        $this->assertDatabaseMissing('reviews', $new_review_data);
+        $response->assertRedirect(route('login'));
+    }
 
-public function test_guest_user_cannot_delete_review()
-{
-    $review = Review::factory()->create();
-    $response = $this->delete(route('reviews.destroy', $review));
-    $response->assertRedirect(route('login'));
-    $this->assertDatabaseHas('reviews', ['id' => $review->id]);
-}
+    // ログイン済みの無料会員はレビューを更新できない
+    public function test_free_user_cannot_access_reviews_update()
+    {
+        $user = User::factory()->create();
 
-public function test_logged_in_free_member_cannot_delete_review()
-{
-    $user = User::factory()->freeMember()->create();
-    $review = Review::factory()->create(['user_id' => $user->id]);
-    $this->actingAs($user);
-    $response = $this->delete(route('reviews.destroy', $review));
-    $response->assertStatus(403);
-    $this->assertDatabaseHas('reviews', ['id' => $review->id]);
-}
+        $restaurant = Restaurant::factory()->create();
 
-public function test_logged_in_paid_member_cannot_delete_others_review()
-{
-    $user = User::factory()->paidMember()->create();
-    $otherUser = User::factory()->create();
-    $review = Review::factory()->create(['user_id' => $otherUser->id]);
-    $this->actingAs($user);
-    $response = $this->delete(route('reviews.destroy', $review));
-    $response->assertStatus(403);
-    $this->assertDatabaseHas('reviews', ['id' => $review->id]);
-}
+        $old_review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $user->id
+        ]);
 
+        $new_review_data = [
+            'score' => 5,
+            'content' => 'テスト更新'
+        ];
 
-public function test_logged_in_paid_member_can_delete_own_review()
-{
-    $user = User::factory()->paidMember()->create();
-    $review = Review::factory()->create(['user_id' => $user->id]);
-    $this->actingAs($user);
-    $response = $this->delete(route('reviews.destroy', $review));
-    $response->assertStatus(200);
-    $this->assertDatabaseMissing('reviews', ['id' => $review->id]);
-}
+        $response = $this->actingAs($user)->patch(route('restaurants.reviews.update', [$restaurant, $old_review]), $new_review_data);
 
-public function test_logged_in_admin_cannot_delete_review()
-{
-    $admin = User::factory()->admin()->create();
-    $review = Review::factory()->create();
-    $this->actingAs($admin);
-    $response = $this->delete(route('reviews.destroy', $review));
-    $response->assertStatus(403);
-    $this->assertDatabaseHas('reviews', ['id' => $review->id]);
-}
+        $this->assertDatabaseMissing('reviews', $new_review_data);
+        $response->assertRedirect(route('subscription.create'));
+    }
 
+    // ログイン済みの有料会員は他人のレビューを更新できない
+    public function test_premium_user_cannot_access_others_reviews_update()
+    {
+        $user = User::factory()->create();
+        $user->newSubscription('premium_plan', 'price_************************')->create('pm_card_visa');
+        $other_user = User::factory()->create();
+
+        $restaurant = Restaurant::factory()->create();
+
+        $old_review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $other_user->id
+        ]);
+
+        $new_review_data = [
+            'score' => 5,
+            'content' => 'テスト更新'
+        ];
+
+        $response = $this->actingAs($user)->patch(route('restaurants.reviews.update', [$restaurant, $old_review]), $new_review_data);
+
+        $this->assertDatabaseMissing('reviews', $new_review_data);
+        $response->assertRedirect(route('restaurants.reviews.index', $restaurant));
+    }
+
+    // ログイン済みの有料会員は自身のレビューを更新できる
+    public function test_premium_user_can_access_own_reviews_update()
+    {
+        $user = User::factory()->create();
+        $user->newSubscription('premium_plan', 'price_************************')->create('pm_card_visa');
+
+        $restaurant = Restaurant::factory()->create();
+
+        $old_review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $user->id
+        ]);
+
+        $new_review_data = [
+            'score' => 5,
+            'content' => 'テスト更新'
+        ];
+
+        $response = $this->actingAs($user)->patch(route('restaurants.reviews.update', [$restaurant, $old_review]), $new_review_data);
+
+        $this->assertDatabaseHas('reviews', $new_review_data);
+        $response->assertRedirect(route('restaurants.reviews.index', $restaurant));
+    }
+
+    // ログイン済みの管理者はレビューを更新できない
+    public function test_admin_cannot_access_reviews_update()
+    {
+        $admin = new Admin();
+        $admin->email = 'admin@example.com';
+        $admin->password = Hash::make('nagoyameshi');
+        $admin->save();
+
+        $restaurant = Restaurant::factory()->create();
+
+        $user = User::factory()->create();
+
+        $old_review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $user->id
+        ]);
+
+        $new_review_data = [
+            'score' => 5,
+            'content' => 'テスト更新'
+        ];
+
+        $response = $this->actingAs($admin, 'admin')->patch(route('restaurants.reviews.update', [$restaurant, $old_review]), $new_review_data);
+
+        $this->assertDatabaseMissing('reviews', $new_review_data);
+        $response->assertRedirect(route('admin.home'));
+    }
+
+    // 未ログインのユーザーはレビューを削除できない
+    public function test_guest_cannot_access_reviews_destroy()
+    {
+        $restaurant = Restaurant::factory()->create();
+
+        $user = User::factory()->create();
+
+        $review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $user->id
+        ]);
+
+        $response = $this->delete(route('restaurants.reviews.destroy', [$restaurant, $review]));
+
+        $this->assertDatabaseHas('reviews', ['id' => $review->id]);
+        $response->assertRedirect(route('login'));
+    }
+
+    // ログイン済みの無料会員はレビューを削除できない
+    public function test_free_user_cannot_access_reviews_destroy()
+    {
+        $user = User::factory()->create();
+
+        $restaurant = Restaurant::factory()->create();
+
+        $review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $user->id
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('restaurants.reviews.destroy', [$restaurant, $review]));
+
+        $this->assertDatabaseHas('reviews', ['id' => $review->id]);
+        $response->assertRedirect(route('subscription.create'));
+    }
+
+    // ログイン済みの有料会員は他人のレビューを削除できない
+    public function test_premium_user_cannot_access_others_reviews_destroy()
+    {
+        $user = User::factory()->create();
+        $user->newSubscription('premium_plan', 'price_************************')->create('pm_card_visa');
+        $other_user = User::factory()->create();
+
+        $restaurant = Restaurant::factory()->create();
+
+        $review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $other_user->id
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('restaurants.reviews.destroy', [$restaurant, $review]));
+
+        $this->assertDatabaseHas('reviews', ['id' => $review->id]);
+        $response->assertRedirect(route('restaurants.reviews.index', $restaurant));
+    }
+
+    // ログイン済みの有料会員は自身のレビューを削除できる
+    public function test_premium_user_can_access_own_reviews_destroy()
+    {
+        $user = User::factory()->create();
+        $user->newSubscription('premium_plan', 'price_************************')->create('pm_card_visa');
+
+        $restaurant = Restaurant::factory()->create();
+
+        $review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $user->id
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('restaurants.reviews.destroy', [$restaurant, $review]));
+
+        $this->assertDatabaseMissing('reviews', ['id' => $review->id]);
+        $response->assertRedirect(route('restaurants.reviews.index', $restaurant));
+    }
+
+    // ログイン済みの管理者はレビューを削除できない
+    public function test_admin_cannot_access_reviews_destroy()
+    {
+        $admin = new Admin();
+        $admin->email = 'admin@example.com';
+        $admin->password = Hash::make('nagoyameshi');
+        $admin->save();
+
+        $restaurant = Restaurant::factory()->create();
+
+        $user = User::factory()->create();
+
+        $review = Review::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'user_id' => $user->id
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')->delete(route('restaurants.reviews.destroy', [$restaurant, $review]));
+
+        $this->assertDatabaseHas('reviews', ['id' => $review->id]);
+        $response->assertRedirect(route('admin.home'));
+    }
 }

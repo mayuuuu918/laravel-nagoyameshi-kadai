@@ -9,6 +9,7 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Middleware\NotSubscribed;
 use App\Http\Middleware\Subscribed;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\ReservationController;
 
 /*
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -75,6 +76,11 @@ Route::group(['middleware' => ['guest:admin', 'auth', 'verified']], function () 
         Route::resource('restaurants.reviews', ReviewController::class)
             ->only(['create', 'store', 'edit', 'update', 'destroy'])
             ->parameters(['reviews' => 'review']);
+
+        Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
+        Route::get('/restaurants/{restaurant}/reservations/create', [ReservationController::class, 'create'])->name('restaurants.reservations.create');
+        Route::post('/restaurants/{restaurant}/reservations', [ReservationController::class, 'store'])->name('restaurants.reservations.store');
+        Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy'])->name('reservations.destroy');
 
         Route::group(['prefix' => '/subscription', 'as' => 'subscription.'], function () {
             Route::get('/edit', [SubscriptionController::class, 'edit'])->name('edit');
