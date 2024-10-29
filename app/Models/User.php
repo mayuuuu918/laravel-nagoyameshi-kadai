@@ -49,4 +49,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    // 1人は複数のレビューを投稿できる
+    public function reviews() {
+        return $this->hasMany(Review::class);
+    }
 }

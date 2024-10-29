@@ -8,6 +8,7 @@ use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Middleware\NotSubscribed;
 use App\Http\Middleware\Subscribed;
+use App\Http\Controllers\ReviewController;
 
 /*
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -70,11 +71,28 @@ Route::group(['middleware' => ['guest:admin', 'auth', 'verified']], function () 
 
     // 有料プランに登録済み
     Route::group(['middleware' => Subscribed::class], function () {
+
+        Route::resource('restaurants.reviews', ReviewController::class)
+            ->only(['create', 'store', 'edit', 'update', 'destroy'])
+            ->parameters(['reviews' => 'review']);
+
         Route::group(['prefix' => '/subscription', 'as' => 'subscription.'], function () {
             Route::get('/edit', [SubscriptionController::class, 'edit'])->name('edit');
             Route::match(['put', 'patch'], '/', [SubscriptionController::class, 'update'])->name('update');
             Route::get('/cancel', [SubscriptionController::class, 'cancel'])->name('cancel');
             Route::delete('/', [SubscriptionController::class, 'destroy'])->name('destroy');
+/*
+        Route::group(['prefix' => '/restaurants', 'as' => 'restaurants.'], function () {
+            Route::get('/reviews/create', [ReviewController::class, 'create'])->name('create');
+            Route::post('restaurants.reviews', [ReviewController::class, 'store'])->name('store');
+            Route::get('restaurants.reviews/edit', [ReviewController::class, 'edit'])->name('edit');
+            Route::match(['put', 'patch'], 'restaurants.reviews', [ReviewController::class, 'update'])->name('update');
+            Route::delete('restaurants.reviews', [ReviewController::class, 'delete'])->name('delete');
+*/
+
+
+
+
         });
 
 

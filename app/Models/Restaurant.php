@@ -19,4 +19,15 @@ class Restaurant extends Model
     public function regular_holidays() {
         return $this->belongsToMany(RegularHoliday::class)->withTimestamps();
     }
+
+    // 1つの店舗は複数のレビューを登録できる
+    public function reviews() {
+        return $this->hasMany(Review::class);
+    }
+
+    // 評価を並び替える
+    public function ratingSortable($query, $direction) {
+        return $query->withAvg('reviews', 'score')->orderBy('reviews_avg_score', $direction);
+    }
+
 }
