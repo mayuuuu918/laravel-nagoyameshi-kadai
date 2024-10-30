@@ -11,6 +11,8 @@ use App\Http\Middleware\Subscribed;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\TermController;
 
 /*
 use App\Http\Controllers\Admin\UserController as AdminUserController;

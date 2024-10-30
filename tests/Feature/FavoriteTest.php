@@ -8,10 +8,12 @@ use Tests\TestCase;
 use App\Models\Admin;
 use App\Models\User;
 use App\Models\Restaurant;
+use Illuminate\Support\Facades\Hash;
 
 
 class FavoriteTest extends TestCase
 {
+    use RefreshDatabase;
     // 1.未ログインのユーザーは会員側のお気に入り一覧ページにアクセスできない
     public function test_guest_cannot_access_favorites_index()
     {
@@ -21,7 +23,7 @@ class FavoriteTest extends TestCase
     }
 
     // 2.ログイン済みの無料会員は会員側のお気に入り一覧ページにアクセスできない
-    public function test_notsubscribed_user_cannot_access_favorites_index()
+    public function test_free_user_cannot_access_favorites_index()
     {
         $user = User::factory()->create();
 
