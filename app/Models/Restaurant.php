@@ -39,4 +39,9 @@ class Restaurant extends Model
     public function popularSortable($query, $direction) {
         return $query->withCount('reservations')->orderBy('reservations_count', $direction);
     }
+
+    // 複数の店舗は複数のユーザーがお気に入り登録できる
+    public function favorited_users() {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
 }

@@ -18,8 +18,7 @@ class ReservationTest extends TestCase
         // 未ログインのユーザーは会員側の予約一覧ページにアクセスできない
         public function test_guest_cannot_access_reservations_index()
         {
-            $restaurant = Restaurant::factory()->create();
-            $response = $this->get(route('restaurants.reservations.index', $restaurant));
+            $response = $this->get(route('reservations.index'));
 
             $response->assertRedirect(route('login'));
         }
@@ -28,10 +27,9 @@ class ReservationTest extends TestCase
         public function test_free_user_cannot_access_reservations_index()
         {
             $user = User::factory()->create();
-            $restaurant = Restaurant::factory()->create();
-            $response = $this->actingAs($user)->get(route('restaurants.reservations.index', $restaurant));
+            $response = $this->actingAs($user)->get(route('restaurants.reservations.index'));
 
-            $response->assertRedirect(route('login'));
+            $response->assertRedirect(route('subscription.create'));
         }
 
         // ログイン済みの有料会員は会員側の予約一覧ページにアクセスできる
@@ -39,8 +37,8 @@ class ReservationTest extends TestCase
         {
             $user = User::factory()->create();
             $user->newSubscription('premium_plan', 'price_************************')->create('pm_card_visa');
-            $restaurant = Restaurant::factory()->create();
-            $response = $this->actingAs($user)->get(route('restaurants.reservations.index', $restaurant));
+
+            $response = $this->actingAs($user)->get(route('restaurants.reservations.index'));
 
             $response->assertStatus(200);
         }
@@ -53,8 +51,7 @@ class ReservationTest extends TestCase
             $admin->password = Hash::make('nagoyameshi');
             $admin->save();
 
-            $restaurant = Restaurant::factory()->create();
-            $response = $this->actingAs($admin, 'admin')->get(route('restaurants.reservations.index', $restaurant));
+            $response = $this->actingAs($admin, 'admin')->get(route('reservations.index'));
 
             $response->assertRedirect(route('admin.home'));
         }
@@ -106,11 +103,12 @@ class ReservationTest extends TestCase
         {
             $restaurant = Restaurant::factory()->create();
             $reservations_data = [
-                'reserved_datetime'	=> now(),
-                'number_of_people' => '0000000000',
+                'reservation_date' => '2024-01-01',
+                'reservation_time' => '00:00',
+                'number_of_people' => '10',
             ];
             $response = $this->post(route('restaurants.reservations.store', $restaurant), $reservations_data);
-            $this->assertDatabaseMissing('reservations', $reservation_data);
+            $this->assertDatabaseMissing('reservations', ['reserved_datetime' => '2024-01-01 00:00', 'number_of_people' => 10]);
             $response->assertRedirect(route('login'));
         }
 
@@ -120,11 +118,12 @@ class ReservationTest extends TestCase
             $user = User::factory()->create();
             $restaurant = Restaurant::factory()->create();
             $reservations_data = [
-                'reserved_datetime'	=> now(),
-                'number_of_people' => '0000000000',
+                'reservation_date' => '2024-01-01',
+                'reservation_time' => '00:00',
+                'number_of_people' => '10',
             ];
             $response = $this->actingAs($user)->post(route('restaurants.reservations.store', $restaurant), $reservations_data);
-            $this->assertDatabaseMissing('reservations', $reservations_data);
+            $this->assertDatabaseMissing('reservations', ['reserved_datetime' => '2024-01-01 00:00', 'number_of_people' => 10]);
             $response->assertRedirect(route('subscription.create'));
         }
 
@@ -135,12 +134,13 @@ class ReservationTest extends TestCase
             $user->newSubscription('premium_plan', 'price_************************')->create('pm_card_visa');
             $restaurant = Restaurant::factory()->create();
             $reservations_data = [
-                'reserved_datetime'	=> now(),
-                'number_of_people' => '0000000000',
+                'reservation_date' => '2024-01-01',
+                'reservation_time' => '00:00',
+                'number_of_people' => '10',
             ];
             $response = $this->actingAs($user)->post(route('restaurants.reservations.store', $restaurant), $reservations_data);
-            $this->assertDatabaseHas('reservations', $reservations_data);
-            response->assertRedirect(route('restaurants.reservations.index', $restaurant));
+            $this->assertDatabaseHas('reservations', ['reserved_datetime' => '2024-01-01 00:00', 'number_of_people' => 10]);
+            response->assertRedirect(route('reservations.index'));
         }
 
         // ログイン済みの管理者は予約できない
@@ -151,13 +151,14 @@ class ReservationTest extends TestCase
             $admin->password = Hash::make('nagoyameshi');
             $admin->save();
             $restaurant = Restaurant::factory()->create();
-            $reservations_data = [
-                'reserved_datetime'	=> now(),
-                'number_of_people' => '0000000000',
+            $reservation_data = [
+                'reservation_date' => '2024-01-01',
+                'reservation_time' => '00:00',
+                'number_of_people' => 10
             ];
             $response = $this->actingAs($admin, 'admin')->post(route('restaurants.reservations.store', $restaurant), $reservations_data);
 
-            $this->assertDatabaseMissing('reservations', $reservations_data);
+            $this->assertDatabaseMissing('reservations', ['reserved_datetime' => '2024-01-01 00:00', 'number_of_people' => 10]);
             $response->assertRedirect(route('admin.home'));
         }
 
@@ -166,12 +167,12 @@ class ReservationTest extends TestCase
         {
             $restaurant = Restaurant::factory()->create();
             $user = User::factory()->create();
-            $reservations_data = [
-                'reserved_datetime'	=> now(),
-                'number_of_people' => '0000000000',
-            ];
+            $reservation = Reservation::factory()->create([
+                'restaurant_id' => $restaurant->id,
+                'user_id' => $user->id
+            ]);
 
-            $response = $this->delete(route('restaurants.reservations.destroy', [$restaurant, $reservation]));
+            $response = $this->delete(route('reservations.destroy', $reservation));
             $this->assertDatabaseHas('reservations', ['id' => $reservation->id]);
             $response->assertRedirect(route('login'));
         }
@@ -182,11 +183,11 @@ class ReservationTest extends TestCase
             $user = User::factory()->create();
 
             $restaurant = Restaurant::factory()->create();
-            $reservations_data = [
-                'reserved_datetime'	=> now(),
-                'number_of_people' => '0000000000',
-            ];
-            $response = $this->actingAs($user)->delete(route('restaurants.reservations.destroy', [$restaurant, $reservations]));
+            $reservation = Reservation::factory()->create([
+                'restaurant_id' => $restaurant->id,
+                'user_id' => $user->id
+            ]);
+            $response = $this->actingAs($user)->delete(route('reservations.destroy', $reservations));
             $this->assertDatabaseHas('reservations', ['id' => $reservation->id]);
             $response->assertRedirect(route('subscription.create'));
         }
@@ -198,14 +199,14 @@ class ReservationTest extends TestCase
             $user->newSubscription('premium_plan', 'price_************************')->create('pm_card_visa');
             $other_user = User::factory()->create();
             $restaurant = Restaurant::factory()->create();
-            $reservations_data = [
-                'reserved_datetime'	=> now(),
-                'number_of_people' => '0000000000',
-            ];
-            $response = $this->actingAs($user)->delete(route('restaurants.reservations.destroy', [$restaurant, $reservations]));
+            $reservation = Reservation::factory()->create([
+                'restaurant_id' => $restaurant->id,
+                'user_id' => $other_user->id
+            ]);
+            $response = $this->actingAs($user)->delete(route('reservations.destroy', $reservations));
 
             $this->assertDatabaseHas('reservations', ['id' => $reservation->id]);
-            $response->assertRedirect(route('restaurants.reservations.index', $restaurant));
+            $response->assertRedirect(route('reservations.index'));
         }
 
         // ログイン済みの有料会員は自身の予約をキャンセルできる
@@ -214,13 +215,13 @@ class ReservationTest extends TestCase
             $user = User::factory()->create();
             $user->newSubscription('premium_plan', 'price_************************')->create('pm_card_visa');
             $restaurant = Restaurant::factory()->create();
-            $reservations_data = [
-                'reserved_datetime'	=> now(),
-                'number_of_people' => '0000000000',
-            ];
-            $response = $this->actingAs($user)->delete(route('restaurants.reservations.destroy', [$restaurant, $reservation]));
+            $reservation = Reservation::factory()->create([
+                'restaurant_id' => $restaurant->id,
+                'user_id' => $user->id
+            ]);
+            $response = $this->actingAs($user)->delete(route('reservations.destroy', $reservation));
             $this->assertDatabaseMissing('reservations', ['id' => $reservations->id]);
-            $response->assertRedirect(route('restaurants.reservations.index', $restaurant));
+            $response->assertRedirect(route('reservations.index'));
         }
 
         // ログイン済みの管理者は予約をキャンセルできない
@@ -232,11 +233,11 @@ class ReservationTest extends TestCase
             $admin->save();
             $restaurant = Restaurant::factory()->create();
             $user = User::factory()->create();
-            $reservations_data = [
-                'reserved_datetime'	=> now(),
-                'number_of_people' => '0000000000',
-            ];
-            $response = $this->actingAs($admin, 'admin')->delete(route('restaurants.reservations.destroy', [$restaurant, $reservations]));
+            $reservation = Reservation::factory()->create([
+                'restaurant_id' => $restaurant->id,
+                'user_id' => $user->id
+            ]);
+            $response = $this->actingAs($admin, 'admin')->delete(route('reservations.destroy', $reservation));
             $this->assertDatabaseHas('reservations', ['id' => $reservations->id]);
             $response->assertRedirect(route('admin.home'));
         }
