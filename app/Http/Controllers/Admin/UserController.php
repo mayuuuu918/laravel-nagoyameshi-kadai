@@ -11,27 +11,6 @@ use App\Models\User;
 class UserController extends Controller
 {
     public function index(Request $request) {
-    /*
-        $keyword = $request->keyword;
-
-        $users = User::all();
-        $total_all = User::count();
-
-        if ($keyword !== null) {
-            $users = User::when($keyword, function($query) use ($keyword) {
-                $query->where('name', 'like', "%{$keyword}%")
-                        ->orWhere('kana', 'like', "%{$keyword}%");
-            })->paginate(15);
-            $total = $users->count();
-        } else {
-            $users = User::paginate(15);
-            $total = "";
-        }
-
-
-        return view('admin.users.index', compact('users', 'total_all', 'keyword', 'total'));
-    }
-    */
 
     // 検索ボックスに入力されたキーワードを取得する
     $keyword = $request->input('keyword');

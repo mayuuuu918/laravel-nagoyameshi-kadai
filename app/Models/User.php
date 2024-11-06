@@ -50,6 +50,11 @@ class User extends Authenticatable implements MustVerifyEmail
         'password' => 'hashed',
     ];
 
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
     // 1人は複数のレビューを投稿できる
     public function reviews() {
         return $this->hasMany(Review::class);
